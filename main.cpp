@@ -48,9 +48,8 @@ unsigned send_req_beast(const std::string &host, const std::string &port, const 
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        return false;
+        return 0;
     }
-    return true;
 }
 
 std::vector<long long> thread_beast()

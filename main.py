@@ -35,6 +35,12 @@ async def send_req_reqwest_pyo3(url: str) -> int:
     except Exception as e:
         return 0
 
+def send_req_beast(url: str) -> int:
+    try:
+        import mini_requests_cpp
+        return mini_requests_cpp.send_req_beast(url)
+    except Exception as e:
+        return 0
 
 def sync_thread(func):
     times = []
@@ -89,6 +95,7 @@ async def async_bench(func: Callable[[str], Awaitable[bool]], lib_name: str):
 
 if __name__ == "__main__":
     sync_bench(send_req_requests, "requests")
+    sync_bench(send_req_beast, "beast")
     asyncio.run(async_bench(send_req_aiohttp, "aiohttp"))
     asyncio.run(async_bench(send_req_reqwest_pyo3, "reqwest"))
     pass

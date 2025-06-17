@@ -6,7 +6,7 @@ else
 endif
 
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -fPIC -I/opt/homebrew/include $(shell python3-config --includes)
+CXXFLAGS = -std=c++17 -Wall -fPIC -O3 -I/opt/homebrew/include $(shell python3-config --includes)
 LDFLAGS = -shared -L/opt/homebrew/lib $(shell python3-config --ldflags) -L$(shell python3-config --prefix)/lib
 LIBS = -lboost_python313 -lpython3.13
 TARGET = dist/mini_requests_cpp.so
@@ -27,9 +27,6 @@ install-wheel: wheel
 
 install-dev: wheel
 	$(PYTHON) -m pip install --force-reinstall --editable .
-
-test-install: install-wheel
-	$(PYTHON) -c "import mini_requests_cpp; print('Test result:', mini_requests_cpp.add(5, 3))"
 
 env-info:
 	@echo "Python Environment Information:"
