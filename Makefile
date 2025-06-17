@@ -8,25 +8,48 @@ SOURCE = main.cpp
 $(TARGET): $(SOURCE)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(TARGET) $(SOURCE) $(LIBS)
 
-rust_build:
-	cargo build --release
+rust_client:
+	cargo build --release -p rust_client
+
+rust_server:
+	cargo build --release -p rust_server
 
 print_header:
 	@printf "%10s\t%10s\t%8s\t%8s\t%8s\t%8s\n" "Language" "Library" "Mean(ms)" "P99(ms)" "P999(ms)" "Max(ms)"
 
-run_cpp: $(TARGET) print_header
-	@./$(TARGET)
+run_cpp: rust_server $(TARGET) print_header
+	@bash -c '\
+		./target/release/rust_server & \
+		SERVER_PID=$$!; \
+		trap "kill $$SERVER_PID" EXIT; \
+		./$(TARGET); \
+	'
 
-run_rust: rust_build print_header
-	@./target/release/speed_up
+run_rust: rust_server rust_client print_header
+	@bash -c '\
+		./target/release/rust_server & \
+		SERVER_PID=$$!; \
+		trap "kill $$SERVER_PID" EXIT; \
+		./target/release/rust_client; \
+	'
 
-run_python: print_header
-	@python main.py
+run_python: rust_server print_header
+	@bash -c '\
+		./target/release/rust_server & \
+		SERVER_PID=$$!; \
+		trap "kill $$SERVER_PID" EXIT; \
+		python main.py; \
+	'
 
-run: $(TARGET) rust_build print_header 
-	@./$(TARGET)
-	@./target/release/speed_up
-	@python main.py
+run: $(TARGET) rust_server rust_client print_header
+	@bash -c '\
+		./target/release/rust_server & \
+		SERVER_PID=$$!; \
+		trap "kill $$SERVER_PID" EXIT; \
+		./$(TARGET); \
+		./target/release/rust_client; \
+		python main.py; \
+	'
 
 clean:
 	rm -f $(TARGET)

@@ -1,5 +1,6 @@
 |Language|Library|Mean(ms)|P99(ms)|P999(ms)|Max(ms)|
 |---:|---:|---:|---:|---:|---:|
-|C++|beast|2.85|7.32|101.41|131.23|
-|Rust|reqwest|3.29|8.58|90.16|90.24|
-|Python|requests|4.24|10.18|87.34|96.89|
+|C++|beast|0.42|1.04|1.11|1.13|
+|Rust|reqwest|0.47|0.85|3.31|3.34|
+|Python|requests|4.33|8.93|11.66|12.07|
+|Python|aiohttp|1.74|2.06|2.16|2.34|
