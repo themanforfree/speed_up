@@ -17,7 +17,7 @@ def send_req_requests(url: str) -> int:
             response = session.get(url)
             return response.status_code
     except requests.RequestException:
-        return False
+        return 0
 
 
 async def send_req_aiohttp(url: str) -> int:
@@ -26,14 +26,14 @@ async def send_req_aiohttp(url: str) -> int:
             async with session.get(url) as response:
                 return response.status
     except aiohttp.ClientError:
-        return False
+        return 0
 
 async def send_req_reqwest_pyo3(url: str) -> int:
     try:
         import mini_requests_rust
         return await mini_requests_rust.send_req_reqwest(url)
     except Exception as e:
-        return False
+        return 0
 
 
 def sync_thread(func):
@@ -42,7 +42,7 @@ def sync_thread(func):
         start = time.perf_counter_ns()
         status = func(URL)
         end = time.perf_counter_ns()
-        assert status == 200, "Request failed"
+        assert status == 200, f"Request failed, status code: {status}"
         times.append((end - start) // 1000)
     return times
 
@@ -53,7 +53,7 @@ async def async_task(func):
         start = time.perf_counter_ns()
         status = await func(URL)
         end = time.perf_counter_ns()
-        assert status == 200, "Request failed"
+        assert status == 200, f"Request failed, status code: {status}"
         times.append((end - start) // 1000)
     return times
 
