@@ -1,3 +1,4 @@
 
 [workspace]
-members = ["rust_client", "rust_server"]
+resolver = "3"
+members = ["mini_requests_rust", "rust_client", "rust_server"]

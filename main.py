@@ -1,3 +1,4 @@
+from collections.abc import Awaitable, Callable
 import requests
 import time
 import math
@@ -10,42 +11,49 @@ REQUESTS_PER_THREAD = 100
 URL = "http://127.0.0.1:8000"
 
 
-def send_req_requests(url: str) -> bool:
+def send_req_requests(url: str) -> int:
     try:
         with requests.Session() as session:
             response = session.get(url)
-            return response.status_code == 200
+            return response.status_code
     except requests.RequestException:
         return False
 
 
-async def send_req_aiohttp(url: str) -> bool:
+async def send_req_aiohttp(url: str) -> int:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
-                return response.status == 200
+                return response.status
     except aiohttp.ClientError:
         return False
 
+async def send_req_reqwest_pyo3(url: str) -> int:
+    try:
+        import mini_requests_rust
+        return await mini_requests_rust.send_req_reqwest(url)
+    except Exception as e:
+        return False
 
-def thread_requests():
+
+def sync_thread(func):
     times = []
     for _ in range(REQUESTS_PER_THREAD):
         start = time.perf_counter_ns()
-        status = send_req_requests(URL)
+        status = func(URL)
         end = time.perf_counter_ns()
-        assert status, "Request failed"
+        assert status == 200, "Request failed"
         times.append((end - start) // 1000)
     return times
 
 
-async def thread_aiohttp():
+async def async_task(func):
     times = []
     for _ in range(REQUESTS_PER_THREAD):
         start = time.perf_counter_ns()
-        status = await send_req_aiohttp(URL)
+        status = await func(URL)
         end = time.perf_counter_ns()
-        assert status, "Request failed"
+        assert status == 200, "Request failed"
         times.append((end - start) // 1000)
     return times
 
@@ -64,23 +72,23 @@ def process_and_print_results(all_times, lib_name):
     )
 
 
-def bench_requests():
+def sync_bench(func: Callable[[str], bool], lib_name: str):
     with ThreadPoolExecutor(max_workers=THREADS) as executor:
-        futures = [executor.submit(thread_requests) for _ in range(THREADS)]
+        futures = [executor.submit(sync_thread, func) for _ in range(THREADS)]
         all_times = []
         for future in as_completed(futures):
             times = future.result()
             all_times.extend(times)
-    process_and_print_results(all_times, "requests")
+    process_and_print_results(all_times,  lib_name)
 
-
-async def bench_aiohttp():
-    tasks = [thread_aiohttp() for _ in range(THREADS)]
+async def async_bench(func: Callable[[str], Awaitable[bool]], lib_name: str):
+    tasks = [async_task(func) for _ in range(THREADS)]
     all_times = await asyncio.gather(*tasks)
     all_times = [time for sublist in all_times for time in sublist]  # Flatten the list
-    process_and_print_results(all_times, "aiohttp")
-
+    process_and_print_results(all_times, lib_name)
 
 if __name__ == "__main__":
-    bench_requests()
-    asyncio.run(bench_aiohttp())
+    sync_bench(send_req_requests, "requests")
+    asyncio.run(async_bench(send_req_aiohttp, "aiohttp"))
+    asyncio.run(async_bench(send_req_reqwest_pyo3, "reqwest"))
+    pass

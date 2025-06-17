@@ -1,0 +1,15 @@
+[package]
+name = "mini_requests_rust"
+version = "0.1.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "mini_requests_rust"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.25.0", features = ["abi3-py38", "extension-module"] }
+pyo3-async-runtimes = { version = "0.25.0", features = ["tokio-runtime"] }
+reqwest = "0.12.20"
+tokio = { version = "1.45.1", features = ["full"] }

@@ -6,13 +6,13 @@ TARGET = bench
 SOURCE = main.cpp
 
 $(TARGET): $(SOURCE)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(TARGET) $(SOURCE) $(LIBS)
+	@$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(TARGET) $(SOURCE) $(LIBS)
 
 rust_client:
-	cargo build --release -p rust_client
+	@cargo build --release -p rust_client
 
 rust_server:
-	cargo build --release -p rust_server
+	@cargo build --release -p rust_server
 
 print_header:
 	@printf "%10s\t%10s\t%8s\t%8s\t%8s\t%8s\n" "Language" "Library" "Mean(ms)" "P99(ms)" "P999(ms)" "Max(ms)"
@@ -46,6 +46,7 @@ run: $(TARGET) rust_server rust_client print_header
 		./target/release/rust_server & \
 		SERVER_PID=$$!; \
 		trap "kill $$SERVER_PID" EXIT; \
+		sleep 0.5; \
 		./$(TARGET); \
 		./target/release/rust_client; \
 		python main.py; \
@@ -56,4 +57,4 @@ clean:
 	cargo clean
 
 
-.PHONY: clean run
+.PHONY: clean run rust_server rust_client print_header

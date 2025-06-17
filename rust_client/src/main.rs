@@ -50,8 +50,7 @@ async fn bench_reqwest() {
     let all_times = join_all(handles)
         .await
         .into_iter()
-        .map(|h| h.unwrap())
-        .flatten()
+        .flat_map(|h| h.unwrap())
         .collect::<Vec<_>>();
     process_and_print_results(all_times);
 }
