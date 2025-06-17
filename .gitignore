@@ -2,3 +2,5 @@
 bench
 .vscode
 .idea
+dist
+*.egg-info

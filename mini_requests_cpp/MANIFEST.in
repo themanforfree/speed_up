@@ -1,0 +1,6 @@
+include *.cpp
+include *.h
+include Makefile
+include README.md
+include LICENSE
+recursive-include . *.cpp *.h
