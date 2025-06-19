@@ -14,6 +14,14 @@
 - 简化测试逻辑：任何非 200 状码均视为失败
 - 保持各库原生执行方式（同步/异步），避免转换带来的额外开销
 
+```shell
+# 手动安装 rust python 和 C++ 相关工具链, 然后执行以下命令
+python3 -m venv .venv       # 创建虚拟环境
+source .venv/bin/activate   # 激活虚拟环境
+make check-and-install-deps # 检查环境并安装依赖
+make run                    # 编译并运行完整测试
+```
+
 ## 测试结果
 
 | Language |  Library | Mean(ms) | P99(ms) | P999(ms) | Max(ms) | LMean(ms) | Bench(ms) | async/sync |
