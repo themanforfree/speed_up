@@ -19,6 +19,16 @@ namespace http = beast::http;
 namespace net = boost::asio;
 using tcp = net::ip::tcp;
 
+class AllowThreads
+{
+public:
+    AllowThreads() { _save = PyEval_SaveThread(); }
+    ~AllowThreads() { PyEval_RestoreThread(_save); }
+
+private:
+    PyThreadState *_save;
+};
+
 class Client
 {
 private:
@@ -52,6 +62,7 @@ private:
                     stream_ = std::make_unique<beast::tcp_stream>(ioc_);
                 }
 
+                AllowThreads _allow_threads; // Allow Python threads to run during connection
                 auto const results = resolver_->resolve(host, port);
                 stream_->connect(results);
 
@@ -116,6 +127,7 @@ public:
             }
 
             // 构建并发送请求
+            AllowThreads _allowThreads;
             http::request<http::empty_body> req{http::verb::get, target, 11};
             req.set(http::field::host, host);
             http::write(*stream_, req);

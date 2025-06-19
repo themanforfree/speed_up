@@ -6,7 +6,7 @@ else
 	PIP := $(shell which pip3 2>/dev/null || which pip 2>/dev/null || echo pip3)
 endif
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -I/opt/homebrew/include
+CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -ffast-math -I/opt/homebrew/include
 LDFLAGS = -L/opt/homebrew/lib
 LIBS = -lboost_system -lboost_url -pthread
 TARGET = bench
