@@ -3,6 +3,11 @@ from setuptools import setup, Extension
 import subprocess
 import sys
 
+def get_python_version():
+    major = sys.version_info.major
+    minor = sys.version_info.minor
+    return f"{major}{minor}"
+
 # 获取 Python 配置
 def get_python_includes():
     try:
@@ -33,7 +38,7 @@ ext_modules = [
         library_dirs=[
             '/opt/homebrew/lib',
         ],
-        libraries=['boost_python313', 'boost_url', 'boost_system'],
+        libraries=[f'boost_python{get_python_version()}', 'boost_system'],
         extra_compile_args=['-std=c++17', '-fPIC', '-Wall'],
         extra_link_args=[],
     ),

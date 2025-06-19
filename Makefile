@@ -1,9 +1,7 @@
 ifdef VIRTUAL_ENV
     PYTHON := $(VIRTUAL_ENV)/bin/python
-	PIP := $(VIRTUAL_ENV)/bin/pip
 else
     PYTHON := $(shell which python3 2>/dev/null || which python 2>/dev/null || echo python3)
-	PIP := $(shell which pip3 2>/dev/null || which pip 2>/dev/null || echo pip3)
 endif
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -ffast-math -I/opt/homebrew/include
@@ -22,7 +20,7 @@ rust_server:
 	@cargo build --release -p rust_server
 
 reqwest_pyo3:
-	@cd mini_requests_rust && maturin develop -r --pip-path $(PIP)
+	@cd mini_requests_rust && maturin develop -r
 
 beast_boost:
 	@cd mini_requests_cpp && $(MAKE) install-wheel

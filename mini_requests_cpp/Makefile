@@ -4,11 +4,14 @@ ifdef VIRTUAL_ENV
 else
     PYTHON := $(shell which python3 2>/dev/null || which python 2>/dev/null || echo python3)
 endif
+# Get Python version in format XY (e.g., 311 for Python 3.11)
+PY_VERSION = $(shell $(PYTHON) -c "import sys; v=sys.version_info; print(f'{v.major}{v.minor}')")
+PY_VERSION_DOT = $(shell $(PYTHON) -c "import sys; v=sys.version_info; print(f'{v.major}.{v.minor}')")
 
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -fPIC -O3 -I/opt/homebrew/include $(shell python3-config --includes)
 LDFLAGS = -shared -L/opt/homebrew/lib $(shell python3-config --ldflags) -L$(shell python3-config --prefix)/lib
-LIBS = -lboost_python313 -lpython3.13 -lboost_system -pthread
+LIBS = -lboost_python$(PY_VERSION) -lpython$(PY_VERSION_DOT) -lboost_system -pthread
 TARGET = dist/mini_requests_cpp.so
 SOURCE = lib.cpp
 
