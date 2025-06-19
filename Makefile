@@ -1,8 +1,4 @@
-ifdef VIRTUAL_ENV
-    PYTHON := $(VIRTUAL_ENV)/bin/python
-else
-    PYTHON := $(shell which python3 2>/dev/null || which python 2>/dev/null || echo python3)
-endif
+PYTHON = $(VIRTUAL_ENV)/bin/python
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -ffast-math -I/opt/homebrew/include
 LDFLAGS = -L/opt/homebrew/lib
@@ -73,5 +69,44 @@ clean:
 	cargo clean
 	cd mini_requests_cpp && $(MAKE) clean
 
+
+
+check-and-install-deps:
+	@echo "Checking and installing dependencies..."
+	@echo "Checking Rust installation..."
+	@command -v cargo >/dev/null 2>&1 || { echo >&2 "Cargo is required but not installed. Aborting."; exit 1; }
+	@echo "Checking Python venv activation..."
+	@if [ -z "$(VIRTUAL_ENV)" ]; then \
+		echo "No virtual environment activated. Please activate your Python virtual environment."; \
+		exit 1; \
+	else \
+		echo "Virtual environment is activated: $(VIRTUAL_ENV)"; \
+	fi
+	@echo "Checking g++ installation..."
+	@command -v g++ >/dev/null 2>&1 || { echo >&2 "g++ is required but not installed. Aborting."; exit 1; }
+	@echo "Checking and installing Boost libraries..."
+	@if [ "$(shell uname)" = "Darwin" ]; then \
+		if ! brew list boost >/dev/null 2>&1; then \
+			echo "Boost not found, installing via Homebrew..."; \
+			brew install boost boost-python3; \
+		else \
+			echo "Boost is already installed."; \
+		fi; \
+	elif [ "$(shell uname)" = "Linux" ]; then \
+		if ! dpkg -l | grep -q libboost-all-dev; then \
+			echo "Boost not found, installing via apt-get..."; \
+			sudo apt-get update && sudo apt-get install -y libboost-all-dev; \
+		else \
+			echo "Boost is already installed."; \
+		fi; \
+	else \
+		echo "Unsupported OS. Please install Boost manually."; exit 1; \
+	fi
+	@echo "Checking and installing python dependencies..."
+	@$(PYTHON) -m pip show maturin > /dev/null 2>&1 || { echo "Installing maturin..."; $(PYTHON) -m pip install maturin; }
+	@$(PYTHON) -m pip show requests > /dev/null 2>&1 || { echo "Installing requests..."; $(PYTHON) -m pip install requests; }
+	@$(PYTHON) -m pip show aiohttp > /dev/null 2>&1 || { echo "Installing aiohttp..."; $(PYTHON) -m pip install aiohttp; }
+	@$(PYTHON) -m pip show build > /dev/null 2>&1 || { echo "Installing build..."; $(PYTHON) -m pip install build; }
+	@echo "All dependencies are installed."
 
 .PHONY: clean run rust_server rust_client print_header
