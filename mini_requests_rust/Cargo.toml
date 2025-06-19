@@ -9,7 +9,12 @@ name = "mini_requests_rust"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.25.0", features = ["abi3-py38", "extension-module"] }
-pyo3-async-runtimes = { version = "0.25.0", features = ["tokio-runtime"] }
-reqwest = "0.12.20"
-tokio = { version = "1.45.1", features = ["full"] }
+pyo3 = { version = "0.25.0", default-features = false, features = [
+    "abi3-py38",
+    "extension-module",
+] }
+pyo3-async-runtimes = { version = "0.25.0", default-features = false, features = [
+    "tokio-runtime",
+] }
+reqwest = { version = "0.12.20", default-features = false }
+tokio = { version = "1.45.1", default-features = false }
