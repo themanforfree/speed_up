@@ -1,17 +1,32 @@
-use pyo3::prelude::*;
-use reqwest::Client;
+use std::sync::Arc;
 
-#[pyfunction]
-fn send_req_reqwest(py: Python, url: String) -> PyResult<Bound<PyAny>> {
-    pyo3_async_runtimes::tokio::future_into_py(py, async move {
-        let client = Client::new();
-        let response = client.get(url).send().await.unwrap();
-        Ok(response.status().as_u16())
-    })
+use pyo3::prelude::*;
+
+#[pyclass]
+struct Client {
+    client: Arc<reqwest::Client>,
+}
+
+#[pymethods]
+impl Client {
+    #[new]
+    fn new() -> Self {
+        Client {
+            client: Arc::new(reqwest::Client::new()),
+        }
+    }
+
+    fn get<'py>(&self, py: Python<'py>, url: String) -> PyResult<Bound<'py, PyAny>> {
+        let c = Arc::clone(&self.client);
+        pyo3_async_runtimes::tokio::future_into_py(py, async move {
+            let response = c.get(&url).send().await.unwrap();
+            Ok(response.status().as_u16())
+        })
+    }
 }
 
 #[pymodule]
 fn mini_requests_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(send_req_reqwest, m)?)?;
+    m.add_class::<Client>()?;
     Ok(())
 }

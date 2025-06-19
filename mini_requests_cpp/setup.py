@@ -33,8 +33,8 @@ ext_modules = [
         library_dirs=[
             '/opt/homebrew/lib',
         ],
-        libraries=['boost_python313', 'boost_url'],
-        extra_compile_args=['-std=c++11', '-fPIC', '-Wall'],
+        libraries=['boost_python313', 'boost_url', 'boost_system'],
+        extra_compile_args=['-std=c++17', '-fPIC', '-Wall'],
         extra_link_args=[],
     ),
 ]

@@ -8,7 +8,7 @@ endif
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -fPIC -O3 -I/opt/homebrew/include $(shell python3-config --includes)
 LDFLAGS = -shared -L/opt/homebrew/lib $(shell python3-config --ldflags) -L$(shell python3-config --prefix)/lib
-LIBS = -lboost_python313 -lpython3.13
+LIBS = -lboost_python313 -lpython3.13 -lboost_system -lboost_url -pthread
 TARGET = dist/mini_requests_cpp.so
 SOURCE = lib.cpp
 

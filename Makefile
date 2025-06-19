@@ -8,7 +8,7 @@ endif
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -I/opt/homebrew/include
 LDFLAGS = -L/opt/homebrew/lib
-LIBS = -lboost_system -pthread
+LIBS = -lboost_system -lboost_url -pthread
 TARGET = bench
 SOURCE = main.cpp
 
@@ -28,7 +28,7 @@ beast_boost:
 	@cd mini_requests_cpp && $(MAKE) install-wheel
 
 print_header:
-	@printf "%10s\t%10s\t%8s\t%8s\t%8s\t%8s\n" "Language" "Library" "Mean(ms)" "P99(ms)" "P999(ms)" "Max(ms)"
+	@printf "%10s\t%10s\t%8s\t%8s\t%8s\t%8s\t%8s\t%8s\n" "Language" "Library" "Mean(ms)" "P99(ms)" "P999(ms)" "Max(ms)" "LMean(ms)" "Bench(ms)"
 
 run_cpp: rust_server $(TARGET) print_header
 	@bash -c '\

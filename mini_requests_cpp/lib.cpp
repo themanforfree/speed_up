@@ -19,43 +19,127 @@ namespace http = beast::http;
 namespace net = boost::asio;
 using tcp = net::ip::tcp;
 
-unsigned send_req_beast(const std::string &url)
+class Client
 {
-    try
+private:
+    net::io_context ioc_;
+    std::string current_host_;
+    std::string current_port_;
+    std::unique_ptr<tcp::resolver> resolver_;
+    std::unique_ptr<beast::tcp_stream> stream_;
+    bool connected_ = false;
+
+    // 初始化与指定主机的连接
+    bool init_connection(const std::string &host, const std::string &port)
     {
-        boost::urls::url_view u = boost::urls::parse_uri(url).value();
-        std::string host = u.host();
-        std::string port = u.has_port() ? u.port() : (u.scheme() == "https" ? "443" : "80");
-        std::string path = u.encoded_path().empty() ? "/" : std::string(u.encoded_path());
+        try
+        {
+            // 如果已连接到其他主机，则先关闭连接
+            if (connected_ && (host != current_host_ || port != current_port_))
+            {
+                close();
+            }
 
-        net::io_context ioc;
-        tcp::resolver resolver(ioc);
-        auto const results = resolver.resolve(host, port);
-        beast::tcp_stream stream(ioc);
-        stream.connect(results);
+            // 如果未连接，建立新连接
+            if (!connected_)
+            {
+                if (!resolver_)
+                {
+                    resolver_ = std::make_unique<tcp::resolver>(ioc_);
+                }
+                if (!stream_)
+                {
+                    stream_ = std::make_unique<beast::tcp_stream>(ioc_);
+                }
 
-        http::request<http::empty_body> req{http::verb::get, path, 11};
-        http::write(stream, req);
+                auto const results = resolver_->resolve(host, port);
+                stream_->connect(results);
 
-        beast::flat_buffer buffer;
-        http::response<http::string_body> res;
-        http::read(stream, buffer, res);
-
-        beast::error_code ec;
-        stream.socket().shutdown(tcp::socket::shutdown_both, ec);
-
-        return res.result_int();
+                current_host_ = host;
+                current_port_ = port;
+                connected_ = true;
+            }
+            return true;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Connection error: " << e.what() << std::endl;
+            connected_ = false;
+            return false;
+        }
     }
-    catch (const std::exception &e)
+
+public:
+    Client() {}
+
+    ~Client()
     {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return 0;
+        close();
     }
-}
+
+    // 关闭连接
+    void close()
+    {
+        if (connected_ && stream_)
+        {
+            beast::error_code ec;
+            stream_->socket().shutdown(tcp::socket::shutdown_both, ec);
+            connected_ = false;
+        }
+    }
+
+    unsigned get(const std::string &url_str)
+    {
+        try
+        {
+            // 解析URL
+            boost::system::result<boost::urls::url_view> result = boost::urls::parse_uri(url_str);
+            if (!result)
+            {
+                std::cerr << "Error: Invalid URL: " << result.error().message() << std::endl;
+                return 0;
+            }
+
+            auto url = result.value();
+            std::string host = url.host();
+            std::string port = url.has_port() ? std::string(url.port()) : (url.scheme() == "https" ? "443" : "80");
+            std::string target = url.path();
+            if (target.empty())
+                target = "/";
+            if (!url.query().empty())
+                target += "?" + std::string(url.query());
+
+            // 确保连接已建立
+            if (!init_connection(host, port))
+            {
+                return 0;
+            }
+
+            // 构建并发送请求
+            http::request<http::empty_body> req{http::verb::get, target, 11};
+            req.set(http::field::host, host);
+            http::write(*stream_, req);
+
+            // 接收响应
+            beast::flat_buffer buffer;
+            http::response<http::string_body> res;
+            http::read(*stream_, buffer, res);
+            return static_cast<unsigned>(res.result_int());
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error: " << e.what() << std::endl;
+            connected_ = false; // 发生错误，标记连接已断开
+            return 0;
+        }
+    }
+};
 
 // 使用Boost.Python导出函数
 BOOST_PYTHON_MODULE(mini_requests_cpp)
 {
     using namespace boost::python;
-    def("send_req_beast", send_req_beast, "A function which sends a GET request using Boost.Beast");
+    class_<Client, boost::noncopyable>("Client")
+        .def("get", &Client::get)
+        .def("close", &Client::close);
 }
