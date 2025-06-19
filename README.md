@@ -24,6 +24,11 @@ make run                    # 编译并运行完整测试
 
 ## 测试结果
 
+宿主机配置：
+- CPU：Apple M2 (8核)
+- RAM：16GB
+- OS：macOS 15.5
+
 | Language |  Library | Mean(ms) | P99(ms) | P999(ms) | Max(ms) | LMean(ms) | Bench(ms) | async/sync |
 | -------: | -------: | -------: | ------: | -------: | ------: | --------: | --------: | ---------: |
 |      C++ |    beast |     0.18 |    0.45 |     2.56 |    2.59 |     17.93 |     18.46 |       sync |
