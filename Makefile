@@ -8,7 +8,7 @@ endif
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -ffast-math -I/opt/homebrew/include
 LDFLAGS = -L/opt/homebrew/lib
-LIBS = -lboost_system -lboost_url -pthread
+LIBS = -lboost_system -pthread
 TARGET = bench
 SOURCE = main.cpp
 

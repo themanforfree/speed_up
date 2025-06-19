@@ -3,7 +3,6 @@
 #include <boost/beast/version.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/url.hpp>
 #include <string>
 #include <vector>
 #include <cassert>
@@ -21,6 +20,61 @@ using tcp = net::ip::tcp;
 const int THREADS = 10;
 const int REQUESTS_PER_THREAD = 100;
 const std::string URL = "http://127.0.0.1:8000";
+
+struct ParsedURL
+{
+    std::string scheme;
+    std::string host;
+    std::string port;
+    std::string target;
+};
+
+ParsedURL parse_url(const std::string &url)
+{
+    ParsedURL result;
+    std::size_t pos = 0;
+
+    // 1. 解析 scheme（直到 "://"）
+    auto scheme_end = url.find("://");
+    if (scheme_end == std::string::npos)
+        throw std::invalid_argument("Invalid URL: missing scheme");
+    result.scheme = url.substr(0, scheme_end);
+    pos = scheme_end + 3; // 跳过 "://"
+
+    // 2. host[:port] 起始位置
+    std::size_t host_start = pos;
+
+    // 3. 终止 host[:port] 的位置是 '/' 或 '?' 或 '#' 或字符串末尾
+    std::size_t path_start = url.find_first_of("/?#", pos);
+    std::size_t authority_end = (path_start == std::string::npos) ? url.length() : path_start;
+
+    // 4. host[:port]
+    std::string host_port = url.substr(host_start, authority_end - host_start);
+    auto colon_pos = host_port.find(':');
+    if (colon_pos != std::string::npos)
+    {
+        result.host = host_port.substr(0, colon_pos);
+        result.port = host_port.substr(colon_pos + 1);
+    }
+    else
+    {
+        result.host = host_port;
+        result.port = (result.scheme == "https") ? "443" : "80"; // 默认端口
+    }
+
+    // 5. target（包括 path + query + fragment）
+    if (path_start != std::string::npos)
+    {
+        result.target = url.substr(path_start);
+    }
+    else
+    {
+        result.target = "/";
+    }
+
+    return result;
+}
+
 class Client
 {
 private:
@@ -94,32 +148,17 @@ public:
     {
         try
         {
-            // 解析URL
-            boost::system::result<boost::urls::url_view> result = boost::urls::parse_uri(url_str);
-            if (!result)
-            {
-                std::cerr << "Error: Invalid URL: " << result.error().message() << std::endl;
-                return 0;
-            }
-
-            auto url = result.value();
-            std::string host = url.host();
-            std::string port = url.has_port() ? std::string(url.port()) : (url.scheme() == "https" ? "443" : "80");
-            std::string target = url.path();
-            if (target.empty())
-                target = "/";
-            if (!url.query().empty())
-                target += "?" + std::string(url.query());
+            auto parsed_url = parse_url(url_str);
 
             // 确保连接已建立
-            if (!init_connection(host, port))
+            if (!init_connection(parsed_url.host, parsed_url.port))
             {
                 return 0;
             }
 
             // 构建并发送请求
-            http::request<http::empty_body> req{http::verb::get, target, 11};
-            req.set(http::field::host, host);
+            http::request<http::empty_body> req{http::verb::get, parsed_url.target, 11};
+            req.set(http::field::host, parsed_url.host);
             http::write(*stream_, req);
 
             // 接收响应
